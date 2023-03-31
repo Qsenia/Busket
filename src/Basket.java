@@ -2,10 +2,18 @@ import java.io.*;
 import java.util.Arrays;
 import java.io.ObjectOutputStream;
 
-public class Basket {
+public class Basket implements Serializable {
+    static final long serialVersionUID = 1L;
     protected String[] products;
     protected int[] prices;
     protected int[] items;
+
+    @Override
+    public String toString() {
+        return "Сейчас в  вашей корзине следующие продукты: " + "\n" + Arrays.toString(products) + "\n" +
+                " по цене (руб): " + Arrays.toString(prices) + "\n" +
+                " в количестве(шт):" + Arrays.toString(items);
+    }
 
     public Basket(String[] products, int[] prices) {
         this.products = products;
@@ -79,5 +87,37 @@ public class Basket {
         }
         return basket;
     }
+
+    public void saveBin(File file) {
+        //для сохранения в файл в бинарном формате.
+        try (ObjectOutputStream oos = new ObjectOutputStream(
+                new FileOutputStream(file))) {
+            oos.writeObject(this);
+            //System.out.println(this);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Basket loadFromBinFile(File file) {
+        //для загрузки корзины из бинарного файла.
+        Basket basket = null;
+        try (ObjectInputStream ois = new ObjectInputStream(
+                new FileInputStream(file))) {
+            basket = (Basket) ois.readObject();
+            System.out.println(basket);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return basket;
+    }
+
+    //Используйте для этого сериализацию и десериализацию.
 
 }
