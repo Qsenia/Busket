@@ -1,6 +1,7 @@
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.*;
 import java.util.Arrays;
-import java.io.ObjectOutputStream;
 
 public class Basket {
     protected String[] products;
@@ -13,10 +14,8 @@ public class Basket {
         this.items = new int[products.length];// массив количество создается
         // исходя из размера массива продуктов
     }
-
     public Basket() {
     }
-
     public void addToCart(int productNum, int amount) {
         items[productNum] += amount;
         //метод добавления amount штук продукта номер productNum в корзину;
@@ -37,7 +36,6 @@ public class Basket {
         }
         System.out.println("Итого: " + totalPrice + " руб.");
     }
-
     public void saveTxt(File textFile) throws IOException {
         //метод сохранения корзины в текстовый файл;
         try (PrintWriter out = new PrintWriter(textFile)) {
@@ -54,7 +52,6 @@ public class Basket {
             }
         }
     }
-
     static Basket loadFromTxtFile(File textFile) {
         //статический(!)метод восстановления объекта корзины из текстового файла,
         // в который ранее была она сохранена;
@@ -79,5 +76,38 @@ public class Basket {
         }
         return basket;
     }
-
+    public void saveJSON(File textFile) throws IOException {
+        //метод сохранения корзины в текстовый файл;
+        try (PrintWriter out = new PrintWriter(textFile)) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String json = gson.toJson(this);//строковое представление объекта
+            out.print(json);//записываем
+            /*for (String product : products) {
+                out.print(product + " ");
+            }
+            out.println();
+            for (int price : prices) {
+                out.print(price + " ");
+            }
+            out.println();
+            for (int item : items) {
+                out.print(item + " ");
+            }*/
+        }
+    }
+    static Basket loadFromJSONFile(File textFile) {
+        Basket basket = null;
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(textFile))) {
+            StringBuilder builder = new StringBuilder();
+            String line = null;
+            while ((line = bufferedReader.readLine()) != null) {
+                builder.append(line);
+            }
+            Gson gson=new Gson();
+            basket=gson.fromJson(builder.toString(),Basket.class);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        return basket;
+    }
 }
