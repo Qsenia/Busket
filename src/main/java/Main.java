@@ -1,31 +1,42 @@
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-        File saveFile = new File("basket.json");
-        String[] products = {"Хлеб", "Яблоки", "Молоко"};
-        int[] prices = {100, 200, 300};
-        Scanner scanner = new Scanner(System.in);
+    static Scanner scanner = new Scanner(System.in);
+    static String[] products = {"Хлеб", "Яблоки", "Молоко"};
+    static int[] prices = {100, 200, 300};
+
+    public static void main(String[] args) throws ParserConfigurationException, IOException, SAXException {
+        XMLPreviewReader preview = new XMLPreviewReader(new File("shop.xml"));
+        File loadFile = new File(preview.loadFile);
+        File saveFile = new File(preview.saveFile);
+        File logFile = new File(preview.logFile);
+        //File saveFile = new File("basket.json");
+        Basket basket = createBasket(loadFile, preview.isLoad, preview.loadFormat);
+        ClientLog log = new ClientLog();
+
         System.out.println("Список возможных товаров для покупки:");
         for (int i = 0; i < products.length; i++) {
             System.out.println((i + 1) + ". " + products[i] + " " + prices[i] + " руб/шт");
         }
         //main.java.Basket basket=new main.java.Basket(products,prices);
-        Basket basket = null;
-        if (saveFile.exists()) {
+        //Basket basket = null;
+        /*if (saveFile.exists()) {
             basket = Basket.loadFromJSONFile(saveFile);
         } else {
             basket = new Basket(products, prices);
-        }
-
-ClientLog log=new ClientLog();
+        }*/
         while (true) {
             System.out.println("Выберите товар и количество или введите 'end' ");
             String input = scanner.nextLine();
             if (input.equals("end")) {
-                log.exportAsCSV(new File("log.csv"));//сохраняем лог
+                if (preview.isLog) {
+                    log.exportAsCSV(logFile);//сохраняем лог
+                }
                 break;
             }
             String[] parts = input.split(" ");
@@ -35,9 +46,30 @@ ClientLog log=new ClientLog();
             System.out.println("Вы добавили:");
             System.out.println((productNumber + 1) + ". " + products[productNumber] + " - " + productCount + "шт. на сумму: " + currentPrice * productCount + " руб.");
             basket.addToCart(productNumber, productCount);
-            log.log(productNumber,productCount);
-            basket.saveJSON(saveFile);
+            if (preview.isLog) {
+                log.log(productNumber, productCount);
+            }
+            if (preview.isSave) {
+                switch (preview.saveFormat) {
+                    case "json" -> basket.saveJSON(saveFile);
+                    case "txt" -> basket.saveTxt(saveFile);
+                }
+            }
         }
         basket.printCart();
+    }
+
+    private static Basket createBasket(File loadFile, boolean isLoad, String loadFormat) {
+        Basket basket;
+        if (isLoad && loadFile.exists()) {
+            basket = switch (loadFormat) {
+                case "json" -> Basket.loadFromJSONFile(loadFile);
+                case "txt" -> Basket.loadFromTxtFile(loadFile);
+                default -> new Basket(products, prices);
+            };
+        } else {
+            basket = new Basket(products, prices);
+        }
+        return basket;
     }
 }
